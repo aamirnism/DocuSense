@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuSense</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', sans-serif; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .app { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .tagline { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.85); background: rgba(255,255,255,.15); display: inline-block; padding: 4px 14px; border-radius: 20px; margin-bottom: 10px; }
+    .desc { font-size: 13px; color: rgba(255,255,255,.75); }
+    .status { font-size: 13px; color: rgba(255,255,255,.9); margin-top: 6px; min-height: 20px; }
+    .upload-card { background: #fff; border-radius: 16px; padding: 2rem; text-align: center; margin-bottom: 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,.15); }
+    input[type=file] { display: none; }
+    .file-label { display: inline-flex; align-items: center; gap: 8px; background: #f0f0f0; border: 1.5px solid #ddd; border-radius: 8px; padding: 8px 18px; font-size: 13px; font-family: 'Poppins', sans-serif; cursor: pointer; color: #444; transition: all .2s; }
+    .file-label:hover { background: #e8e8e8; }
+    .file-name { font-size: 13px; color: #666; margin: 8px 0; }
+    .btn-row { display: flex; justify-content: center; gap: 10px; margin-top: 12px; }
+    .btn { padding: 9px 28px; border: none; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .progress-wrap { margin-top: 12px; display: none; }
+    .progress-bar { height: 4px; background: #eee; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 2px; width: 0%; transition: width .4s; }
+    .progress-text { font-size: 11px; color: #999; text-align: center; margin-top: 5px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .card { background: #fff; border-radius: 14px; padding: 1.25rem 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,.1); transition: transform .2s; }
+    .card:hover { transform: translateY(-2px); }
+    .card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .card-icon { font-size: 20px; }
+    .card-title { font-size: 14px; font-weight: 700; color: #333; }
+    .card-count { margin-left: auto; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+    .card-body { font-size: 12px; color: #555; line-height: 1.7; }
+    .item-row { padding: 5px 0; border-bottom: 1px solid #f0f0f0; display: flex; gap: 6px; }
+    .item-row:last-child { border-bottom: none; }
+    .item-num { color: #aaa; font-size: 11px; min-width: 16px; font-weight: 600; }
+    .none-msg { color: #bbb; font-style: italic; font-size: 12px; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <p class="tagline">🤖 AI Automated & Brief Auditflow Summariser</p>
+      <h1>DocuSense</h1>
+      <p class="desc">Extract tasks and deadlines using AI</p>
+      <p class="status" id="status">Waiting for a PDF file to be uploaded...</p>
+    </div>
+
+    <div class="upload-card">
+      <input type="file" id="fileInput" accept=".pdf">
+      <label class="file-label" for="fileInput">📄 Choose File</label>
+      <p class="file-name" id="fileName">No file selected</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="analyzeBtn" disabled>Analyze</button>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <p class="progress-text" id="progressText">Uploading...</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-icon">📌</span>
+          <span class="card-title">Action Items</span>
+          <span class="card-count" id="cnt-actions">0</span>
+        </div>
+        <div class="card-body" id="body-actions"><p class="none-msg">Upload a PDF to analyze</p></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-icon">📅</span>
+          <span class="card-title">Deadlines</span>
+          <span class="card-count" id="cnt-deadlines">0</span>
+        </div>
+        <div class="card-body" id="body-deadlines"><p class="none-msg">Upload a PDF to analyze</p></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-icon">✏️</span>
+          <span class="card-title">Signatures</span>
+          <span class="card-count" id="cnt-signatures">0</span>
+        </div>
+        <div class="card-body" id="body-signatures"><p class="none-msg">Upload a PDF to analyze</p></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-icon">📝</span>
+          <span class="card-title">Instructions</span>
+          <span class="card-count" id="cnt-notes">0</span>
+        </div>
+        <div class="card-body" id="body-notes"><p class="none-msg">Upload a PDF to analyze</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentFile = null;
+
+    document.getElementById('fileInput').addEventListener('change', function() {
+      if (this.files[0]) {
+        currentFile = this.files[0];
+        document.getElementById('fileName').textContent = currentFile.name;
+        document.getElementById('analyzeBtn').disabled = false;
+        document.getElementById('status').textContent = 'Ready: ' + currentFile.name;
+      }
+    });
+
+    function setProgress(pct, text) {
+      document.getElementById('progressWrap').style.display = 'block';
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = text;
+    }
+
+    function renderSection(bodyId, cntId, items) {
+      document.getElementById(cntId).textContent = items ? items.length : 0;
+      const el = document.getElementById(bodyId);
+      if (!items || items.length === 0) { el.innerHTML = '<p class="none-msg">None identified</p>'; return; }
+      el.innerHTML = items.map((item, i) =>
+        `<div class="item-row"><span class="item-num">${String(i+1).padStart(2,'0')}</span><span>${item}</span></div>`
+      ).join('');
+    }
+
+    document.getElementById('analyzeBtn').addEventListener('click', async () => {
+      if (!currentFile) return;
+      const btn = document.getElementById('analyzeBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Analyzing...';
+      setProgress(30, 'Uploading PDF...');
+
+      const formData = new FormData();
+      formData.append('file', currentFile);
+
+      try {
+        setProgress(60, 'Sending to Gemini AI...');
+        const resp = await fetch('/analyze', { method: 'POST', body: formData });
+        const parsed = await resp.json();
+        setProgress(100, 'Done!');
+
+        renderSection('body-actions', 'cnt-actions', parsed.action_items);
+        renderSection('body-deadlines', 'cnt-deadlines', parsed.deadlines);
+        renderSection('body-signatures', 'cnt-signatures', parsed.signatures);
+        renderSection('body-notes', 'cnt-notes', parsed.important_notes);
+
+        document.getElementById('status').textContent = '✅ Analysis Complete: ' + currentFile.name;
+        document.getElementById('status').style.color = '#7fff7f';
+        setTimeout(() => { document.getElementById('progressWrap').style.display = 'none'; }, 800);
+        btn.innerHTML = 'Analyze Again';
+        btn.disabled = false;
+      } catch (e) {
+        document.getElementById('status').textContent = '❌ Error — please try again';
+        btn.innerHTML = 'Analyze';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
