@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 import PyPDF2
 from google import genai
 import json
+import os
 
 app = Flask(__name__)
 
@@ -52,3 +53,4 @@ Document:
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
+ app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
