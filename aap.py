@@ -5,9 +5,8 @@ import json
 import os
 
 app = Flask(__name__)
+client = genai.Client(api_key=os.environ.get("AIzaSyDPYvYmu-sHWbhNBfv783RASImJETbiVc0"))
 
-client = genai.Client(api_key="AIzaSyDPYvYmu-sHWbhNBfv783RASImJETbiVc0")  # paste your new key here
- 
 @app.route("/")
 def home():
     return send_from_directory(".", "index.html")
@@ -15,7 +14,6 @@ def home():
 @app.route("/analyze", methods=["POST"])
 def analyze():
     file = request.files["file"]
-
     reader = PyPDF2.PdfReader(file)
     text = ""
     for page in reader.pages:
@@ -35,7 +33,7 @@ Document:
 
     try:
         response = client.models.generate_content(
-           model="gemini-2.5-flash" ,
+            model="gemini-2.5-flash",
             contents=prompt
         )
         raw = response.text.replace("```json", "").replace("```", "").strip()
@@ -52,5 +50,4 @@ Document:
         })
 
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
- app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
